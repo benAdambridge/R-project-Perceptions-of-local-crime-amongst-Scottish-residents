@@ -1,0 +1,864 @@
+---
+author: Ben Bridge
+date: '`r format(Sys.Date())`'
+title: 'Perceptions of Local Crime in Scotland '
+subtitle: Ethnicity and Society
+output:
+  pdf_document:
+    number_sections: true
+    toc_depth: 2.0
+    toc: true
+fontsize: 12pt
+
+header-includes:
+ \usepackage{float}
+ \floatplacement{figure}{H}
+---
+
+```{r setup, include = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+knitr::opts_chunk$set(message = FALSE)
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# Library
+
+library(haven)
+
+library(foreign)
+
+library(ggplot2)
+
+library(ggthemes)
+
+library(survey)
+
+library("jtools")
+
+library("remotes")
+
+library("dplyr")
+
+library(cowplot)
+
+library(car)
+
+library(dplyr)
+
+library(lmtest)
+
+library(sandwich)
+
+library(tidyr)
+
+library(psy)
+
+library(heatmaply)
+
+library(ymlthis)
+
+library(kableExtra)
+
+library(knitr)
+
+library(brant)
+
+library(MASS)
+require(Hmisc)
+require(reshape2)
+
+library(brglm2)
+
+library(sjstats)
+
+library(generalhoslem)
+
+library(ordinal)
+
+library(devtools)
+
+library(rmarkdown)
+
+library(rms)
+
+library(VGAM)
+
+library(effects)
+
+library(effectsize)
+
+library(olsrr)
+
+library(mgcv)
+
+
+```
+
+```{r}
+# load data, set working directory
+
+setwd("~/1 University - Politics and IR/3rd Year 2nd term/ANALYSING DATA/Assignment 2")
+
+a <- read.csv("scjs1920_nvf-main_y4_eul-safeguarded_20210322_nvf.tab", sep = "\t")
+
+```
+
+\pagebreak
+
+# Introduction
+
+The following report tackles the topic area of Ethnicity and Society within Scotland, and our Research Question is - to what extent, if any, does being an Ethnic Minority in Scotland, lead to feelings of pessimism toward improvement of crime levels, in their local areas?
+
+People's perceptions of crime have often underpinned people's overall satisfaction with government and quality of life, pointing to the importance of the topic (Duffy et al: 2008). Also, generally, people are more optimistic on the state of local crime, than national, termed the perception gap (Mohan et al: 2011), but is this the case for minorities?
+
+Local policing forces have been cut, with a single national police force replacing regional area policing (Mohan et al: 2011), and policing techniques have shifted from engagement to enforcement, with more stop and search's being conducted (Fyfe et al: 2021). Stop and search has historic links with targeting ethnic minorities, and this more enforcement element, could add a different context to the relations minorities have with police, and white people. Relative poverty levels after housing costs, is higher amongst Ethnic Minorities than White people in Scotland, and a higher median age for White people is underpinned by older people having a lower median poverty rate (Scottish Government: 2020). With poor economic status being linked to ethnicity, and being fearful of racial harassment, locally (Netto et al: 2011). Victims of crime are condensed in deprived areas (Fohring: 2012: P.12), and as we have explored, ethnic minorities in Scotland are more likely to be deprived. Additionally, in Glasgow East, one of the most violent areas in Scotland, poverty is linked with higher risk behaviour, and subsequently crime involvement (Coid: 2021). Moreover, there is some lack of trust in police and views that racial crime would not be taken seriously, and stricter attitudes, or feelings of shame toward drug-use within ethnic minority communities, both leading to underreporting of crime amongst ethnic minorities (Clarke and Moody: 2002; Khan: 2000).
+
+Given the strained relationship with the police, higher levels of deprivation, higher likelihood to be victims, and reluctance to report certain types of crime, ethnic minorities would seem to have reason to think that crime rates, locally, are increasing, or have more negativity to how crime is dealt with, impacting their perception on crime rate. Despite local crime decreasing generally in Scotland, is there a further perception gap between ethnic minorities and White people, where White people are more likely to live in areas with less crime, and so be happier with the crime rate? Thus, our research hypothesis is that Ethnic Minorities will show pessimistic views toward the state of Crime in their Local Areas.
+
+The Report was able to answer the research question, finding being an Ethnic Minority did not render pessimistic views toward the state of Local crime in their area, rather the opposite.
+
+\pagebreak
+
+# Descriptive statistics and data preparation
+
+## Data Summary
+
+The data used is derived from the Scottish Crime and Justice Survey (SCJS), this is conducted annually, and is one of the largest Scottish surveys conducted, measuring views on crime levels and prevention, involvement in crime, or experience of crime. Here, we will be using questions derived from the area of the dataset of non-victim specific questions. The SCJS has a larger sample than many well respected British surveys with around 6000 Scottish residents, a very good sample size. For example, the British Election Survey, respectively have 379 Scottish respondents out of 3733. The sampling method used random probability sampling, and included those living in households.
+
+## Cleaning the data
+
+All variables included in the Regression are categorical variables, and therefore are coded as such, as originally all variables were continuous. Moreover, most variables missing values were coded out beforehand, but for those with missing values (those respondents that answered Don't Know or Refused) still included, they were coded to NA's here. Inclusion of all the variables selected when put into the regression, removed around 1,000 respondents, 5,500 answered the survey, meaning a loss of around 20% of the total respondents - a respectable amount. Moreover, outlier detection here involved looking for unusual amounts of values for a particular group within variables, given we are working with categorical variables.
+
+## Dependent variable
+
+The Dependent variable for the Report is derived from asking respondents their views on whether crime locally has increased or decreased in the past two years. This has five responses, and a meaningful order to the responses, rendering this an ordinal variable. The categories are - A lot less, A little less, Stayed the same, A little more, A lot more. Furthermore, this is coded to be continuous later on, for Linear regression analysis.
+
+## Ethnicity
+
+The Ethnicity variable was recoded prior to release, to limit people being person identifiable (Magnani and Page: 2021), thus, the categories for this variable are - White Scottish, White British, White Other, and Minority Ethnic, and is derived from asking people how they identify ethnically. Importantly, there are 231 Minority Ethnic respondents in the survey, a very small fraction of the 5,500 respondents.
+
+## Control Variables
+
+The Control variables were - Age, Gender, and whether one lives in an Urban or Rural area. Younger groups had much smaller frequencies than the other age groups, and the other age groups seemed to be grouped by every nine years. So, it made sense to group 16-17, 18-19, 20-24, for better distribution. Thus, the categories for this variable started with those of ages 16-24, up until 75+ age group. We can see this better distribution here:
+
+```{r include=FALSE}
+
+table(a$QDAGE2)
+
+
+```
+
+```{r include=FALSE}
+##### create new Age variable 
+
+# combining ages  16 - 17, 18 - 19, 20 - 24
+
+a$age[a$QDAGE2 %in% 1] <-1 
+a$age[a$QDAGE2 %in% 2] <- 1
+a$age[a$QDAGE2 %in% 3] <- 1
+a$age[a$QDAGE2 %in% 4] <- 2
+a$age[a$QDAGE2 %in% 5] <- 3
+a$age[a$QDAGE2 %in% 6] <- 4
+a$age[a$QDAGE2 %in% 7] <- 5
+a$age[a$QDAGE2 %in% 8] <- 6
+a$age[a$QDAGE2 %in% 9] <- 7
+a$age[a$QDAGE2 %in% 10] <- 8
+
+```
+
+```{r include=FALSE}
+
+# observing what the new variable has turned out like
+
+table(a$age)
+
+
+```
+
+```{r include=FALSE}
+
+# checking whether the type of variable age should be is coded as so in the dataset
+
+class(a$age)
+
+# changing the class of age - to more appropriate type
+
+a$age<-as.factor(a$age)
+
+class(a$age)
+
+
+```
+
+```{r include=FALSE}
+# Rename age categories, as currently shows as numbers, we could use them, but better to rename 
+
+levels(a$age) <- c("16-24", "25-34", "35-44", "45-54", "55-59", "60-64", "65-74", "75+")
+
+levels(a$age)
+
+# frequency table
+
+prop.table(table(a$age))
+```
+
+```{r}
+
+a$QDAGE2<-as.factor(a$QDAGE2)
+
+ggplot(a, aes (x=QDAGE2))+
+  geom_bar(colour="black")+
+  theme_bw()+
+  labs(title = "Age of Respondents before",
+       caption = "Data from the Scottish Crime and Justice Survey (2019)",  y = "Frequency",
+       x = "Age")+
+  guides(fill=FALSE)
+
+```
+
+```{r echo=FALSE, warning=FALSE}
+
+
+
+# frequency barplot
+
+ggplot(a, aes (x=age, fill=age))+
+  geom_bar(colour="black")+
+  theme_bw()+
+  labs(title = "Age of Respondents After",
+       caption = "Data from the Scottish Crime and Justice Survey (2019)",  y = "Frequency",
+       x = "Age")+
+  guides(fill=FALSE)
+
+
+```
+
+Furthermore, Gender has two groups: Male and Female, rendering it a Binary variable. Moreover, there are two categories for Urban/Rural variable, and the classification is derived from the 2016 Scottish Government classification based on drive/commute times and settlement sizes (Scottish Government: 2018).
+
+## Potential Confounders
+
+The following potential confounders have mainly been selected due to any possible links between Ethnicity and people's perception of local crime, our subsequent main focuses of the Report.
+
+Touching upon the underreporting of crime and the logic that those thinking their local area needs more police could perceive crime in their area to not be improving, capturing opinion on local policing seemed intuitive. This variable is derived from asking respondents -- police presence in your local area is: -- and given three options of: Not enough, About right, Too much.
+
+Being a victim of crime is often thought to be the biggest driver of negative perceptions of both local crimes, given the emotional knock-on effect which makes you more wary and fearful, thus, underpinning opinion on the level of crime in your local area. As discussed, those who are deprived are more likely to be victims, and ethnic minorities, so could be related to these factors. The variable is constructed of 2 responses, derived from the question -- have you been a victim of crime -- with the responses yes, or no. Additionally, crime here is measured as property and violent crime, but not threats or sexual crime.
+
+Both of the following variables measuring Deprivation are potential confounders with those who are Deprived have low confidence, overall, with the handling of crime (Duffy: 2008) and the link between ethnicity and deprivation explored. Included is whether people live in the 15% most deprived areas or not, and this has two categories. Also, the Scottish Index of Multiple Deprivation variable measures how deprived an area is, broken down by Quantiles of the level of deprivation on income, education, health, employment, crime, and housing (Scottish Government:2021). Quantile 1 equalling people living in the Most Deprived areas, Quantile 5 denoting the least deprived areas people are living in, and has 5 categories, one through five.
+
+\pagebreak
+
+```{r include=FALSE}
+
+# make a factor as should be a binary variable 
+
+a$gender<-as.factor(a$QDGEN)
+
+
+```
+
+```{r include=FALSE}
+
+levels(a$gender)
+
+levels(a$gender) <- c("Male", "Female")
+
+table(a$gender)
+
+```
+
+```{r include=FALSE}
+
+prop.table(table(a$gender))
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+table(a$TABURBRUR)
+
+# NAs have been removed 
+
+```
+
+```{r warning=FALSE, include=FALSE}
+# make urban rural variable factor 
+
+class(a$TABURBRUR)
+
+a$UR<-as.factor(a$TABURBRUR)
+
+class(a$UR)
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# Rename variable
+
+table(a$UR)
+
+levels(a$UR) <- c("Urban", "Rural")
+
+table(a$UR)
+
+```
+
+```{r warning=FALSE, include=FALSE}
+# check levels - for reference point 
+
+levels(a$UR)
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+table(a$PREVSURVEYCRIME)
+
+a$victim<-as.factor(a$PREVSURVEYCRIME)
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# check the structure of the deprived variable 
+
+table(a$SIMD_QUINT)
+
+class(a$SIMD_QUINT)
+
+# recode to factor, as is a 5 point scale, suggesting ordinal, logical hieracichal structure
+
+a$deplevel<-as.factor(a$SIMD_QUINT)
+
+# change labels, to represent what is set out in data dictionary, 1 = Quantile 1(high deprivation), and so on
+
+levels(a$deplevel)<-c("Q1", "Q2", "Q3", "Q4", "Q5")
+
+table(a$deplevel)
+
+```
+
+```{r warning=FALSE, include=FALSE}
+############### order the variable the other way - makes more logical sense to have ascending order for interpretation, not that the order matters here 
+
+a$deplevel <- ordered(a$deplevel, 
+                             levels = c("Q5", "Q4", "Q3", "Q2", "Q1"))
+
+table(a$deplevel)
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# make deprived variable factor 
+
+class(a$SIMD_15MOST)
+
+a$deprived<-as.factor(a$SIMD_15MOST)
+
+class(a$deprived)
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# rename labels
+
+levels(a$deprived) <- c("15% most deprived", "Remainder")
+
+table(a$deprived)
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# remove missing values from ethnicity variable
+
+a$QDETH3[a$QDETH3 < 1 ] <- NA
+
+
+# setting ethnicity to a factor, originally an integer 
+
+a$ethnicity<-as.factor(a$QDETH3)
+
+table(a$ethnicity)
+
+
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# rename ethnicity
+levels(a$ethnicity) <- c("White Scottish", "White British", "White Other", "Minority Ethnic")
+
+
+# shows that renaming has worked
+table(a$ethnicity)
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+table(a$POLPRES)
+
+# remove missing values
+
+a$POLPRES[a$POLPRES < 1 ] <- NA
+
+prop.table(table(a$POLPRES))
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# changing to factor, as is ordinal variable, and renaming 
+
+class(a$POLPRES)
+
+a$police<-as.factor(a$POLPRES)
+
+levels(a$police) <- c("Not Enough", "About right", "Too much")
+
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+a$QS2AREA[a$QS2AREA < 1 ] <- NA
+
+a$percepLoccrime<-as.factor(a$QS2AREA)
+
+
+# rename 
+
+levels(a$percepLoccrime) <- c("A lot more", "A little more", "About the same", "A little less", "A lot less")
+
+table(a$percepLoccrime)
+
+
+
+
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# reference point - about the same - is middle point of the groupings 
+
+levels(a$percepLoccrime)
+
+a$percepLoccrime <- relevel(a$percepLoccrime, ref = 3)
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+############### order the variable the other way - makes more logical sense to have ascending order 
+
+a$percepLoccrime <- ordered(a$percepLoccrime, 
+                             levels = c("A lot less", "A little less", "About the same", "A little more", "A lot more"))
+
+
+table(a$percepLoccrime)
+
+
+```
+
+### Exploratory Data
+
+```{r}
+# proportional plot of living in Deprived area by ethnicity
+
+a%>%
+  filter(!is.na(deprived)) %>%
+  filter(!is.na(ethnicity)) %>%
+  ggplot() +
+ geom_bar(aes(x = (ethnicity), fill = deprived),
+position = "fill") +
+  labs(title = "Residence in a Deprived 15% area or not, by Ethnicity",
+       caption = "Data from the Scottish Crime and Justice Survey (2019)")+
+ scale_y_continuous(breaks = seq(0, 1, .2),
+ label = scales::percent)
+
+```
+
+Minority Ethnics, mostly align with all other ethnicities in living in the 15% most deprived areas.
+
+```{r}
+
+# proportional bar graph of quintile deprivation by ethnicity
+
+a%>%
+  filter(!is.na(deplevel)) %>%
+  filter(!is.na(ethnicity)) %>%
+  ggplot() +
+ geom_bar(aes(x = (ethnicity), fill = deplevel),
+position = "fill") +
+  labs(title = "Qunitile Deprivation by Ethnicity",
+       caption = "Data from the Scottish Crime and Justice Survey (2019)")+
+ scale_y_continuous(breaks = seq(0, 1, .2),
+ label = scales::percent)
+
+```
+
+For Minority Ethnics, there are some of the lowest deprived people, but they also present some of the most Deprived people.
+
+```{r}
+
+# proportional bar graph of victim
+
+a%>%
+  filter(!is.na(victim)) %>%
+  filter(!is.na(ethnicity)) %>%
+  ggplot() +
+ geom_bar(aes(x = (ethnicity), fill = victim),
+position = "fill") +
+  labs(title = "Victim of Crime status by Ethnicity",
+       caption = "Data from the Scottish Crime and Justice Survey (2019)")+
+ scale_y_continuous(breaks = seq(0, 1, .2),
+ label = scales::percent)
+
+```
+
+Slightly more likely if an Ethnic Minority or White Other to have ever been a victim.
+
+Overall, there does not seem to be the higher levels of Deprivation amongst Ethnic Minorities, compared to White people, that the literature suggests. Additionally, there seems to be some slight increase for Minority Ethnics being a Victim as has been suggested.
+
+\pagebreak
+
+# Overview of Methods
+
+Ordinal Regression is chosen as the statistical method for the Report, as the question on Local Perception of Crime -- our dependent variable -- is a categorical variables with a logical, hierarchical structure, without equal distances between the categories, like an interval variable has. With five categories ranking one's view on whether Local Crime has improved in the past two years, this falls underneath the 7-category limit, which typically indicates that the variable should be considered continuous, and in this case, a Linear regression would be run. Although, five categories are above the ideal, usual categories in a dependent variable used for Ordinal Regression's, of three. Additionally, use of the Ordinal Regression method is under-utilised in the social sciences, as it is often appropriate run when dealing with Likert scale questions, which are very popular and important in surveys generally. Thus attempting to deploy an appropriate method, increases the confidence with which we can infer and suggest around the importance of Ethnicity in people's Perception of Local crime, in Scotland.
+
+However, despite the suitability of an Ordinal Regression for the construct of our dependent variable, we resorted to a Linear regression, as the Ordinal regression residuals suggested a violation of the Proportional Odds Model, and some statistically significant variables contributed to this violation. This proportional odds assumption violation greatly changes how the model is interpreted, and to not leave out potential important variables, the method was changed. Despite this, the dependent variable being a Likert type variable means it can be conceived as having Linearity or scale like characteristics, albeit, this is a Liberal interpretation. However, with five categories, our dependent variable has more categories than the optimal amount (3) for an ordinal regression anyway. Moreover, as the amount of categories increase (with the 7-category threshold for being an interval variable in mind), a Linear regression becomes a more appropriate method, as we have 5 categories, so we should be able to get fairly robust, insightful findings still. Furthermore, Multinominal regression could be used, but this would completely ignore the logical ordering of the dependent, and there is some confusion, similar to Ordinal regression, around its interpretations and residuals.
+
+\pagebreak
+
+# Analysis and Diagnostics
+
+## Ordinal Models
+
+```{r warning=FALSE, include=FALSE}
+
+# remove all missing values, and create new dataset with said variables, without their missing values
+
+b <- a[which(complete.cases(a[,c('gender','age','victim', 'UR','deplevel','police','deprived','ethnicity')])),]
+
+```
+
+When running through the Ordinal Regression we ran into some problems with the Proportional Odds Assumption, thus, we will just show the Proportional Odds and goodness of fit test.
+
+```{r warning=FALSE, include=FALSE}
+
+# full ordinal model 
+
+# ordinal full regression model
+
+m5<-polr(percepLoccrime~gender + age + victim + UR + deplevel + police + deprived + ethnicity, data = b)
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# turning odds ratios, into percentages 
+
+# [-1] - gets rid of the intercepts 
+
+exp(m5$coefficients[-1]-1)*100
+
+
+# p-values 
+
+ctable2 <- coef(summary(m5))
+p2 <- pnorm(abs(ctable2[, "t value"]), lower.tail = FALSE) * 2
+ctable2 <- cbind(ctable2, "p value" = p2)
+round(ctable2,4)
+
+
+```
+
+```{r include=FALSE}
+
+# R squared of the model 
+
+DescTools::PseudoR2(
+  m5, 
+  which = c("McFadden", "CoxSnell", "Nagelkerke", "AIC")
+)
+
+# The Mcfadden Psuedo R-squared of our model, indicates 3.27 of the variance in Perception of Local crime is explained by the Model, r-squared's between 0.20-0.40 are considered good, and above 0.4 considered excellent, our r-squared falls below this.
+
+```
+
+### Proportional Odds and Goodness of Fit test
+
+```{r warning=FALSE}
+
+# check proportional odds assumption
+
+brant::brant(m5)
+
+# goodness of fit test
+
+generalhoslem::lipsitz.test(m5)
+
+
+```
+
+The goodness of fit test has a p-value of above 0.05 suggesting good fit for understanding people's Perception of local crime, is achieved by our model. The Brant Test, tests the proportional odds assumption, which posits that each Predictor variable used has the same effect for each change point in the Dependent Variable. So, when Perception of Crime moves from people responding, 'about the Same', to 'A little more', for example, the predictor of say Age, is having the same effect, as when the change point shifts to A little more, to a Lot more. Five factors - being a Victim or not, living in an Urban or Rural area, being in low deprivation category, thinking levels of local police is about right, and thinking there is too much local police - show a p-value of under 0.05. Therefore, failing the proportional odds assumption, and the Omnibus - representing the whole model - also falls below 0.05. This is problematic given that the ordinal regression showed being a Victim, and being low levels of Deprived to be statistically significant, we still want to account for these variables effects on other variables effects, = especially being a Victim, which is consistently pointed to as a significant factor in people's perception of crime rate improvement.
+
+\pagebreak
+
+## Linear regression
+
+As the Ordinal Regressions Proportional Odds assumption was violated, we turn to conducting a Linear regression process.
+
+```{r warning=FALSE, include=FALSE}
+
+# removing missing values 
+
+c <- b[which(complete.cases(b[,c('gender','age','victim', 'UR','deplevel','police','deprived','ethnicity')])),]
+
+# just means that there are two different saved datasets - one with PercepLocCrime as factor, the other - PercepLoccrime as integer for linear regression
+
+```
+
+```{r warning=FALSE, include=FALSE}
+
+# make our dependent variable a integer, so that Linear regression can be ran on it
+
+c$percepLoccrime<-as.integer(c$percepLoccrime)
+
+
+```
+
+### Ethnicity Model
+
+```{r}
+
+# just ethnicity as predictor regression 
+
+
+lm<-lm(percepLoccrime~ethnicity, data = c)
+
+summary(lm)
+
+
+
+```
+
+Minority Ethnics effect on perception of Local crime over White Scottish people is insignificant, and having no effect on the where one thinks the state of Local crime is. This model explains 0.3% of the variance in Perception of Local crime, a very small amount.
+
+
+
+
+### Controls Model
+
+```{r}
+
+# ethnicity and controls model
+
+lm_<-lm(percepLoccrime~ethnicity+UR+gender+age, data = c)
+
+
+summary(lm_)
+
+
+
+```
+
+Minority Ethnics continue to be insignificant, and having no effect on the where one thinks the state of Local crime is. White Other's continue to score lower than White Scottish people, at 0.24 on their Perception of Local crime improvement in the past 2 years, meaning they are more optimistic of local crime improvement, with statistical significance level of 99.9% in the Scottish population, controlled for all other variables. Whilst 25 to 34 years olds scored 0.12 higher than 16-24 years olds, so more likely to think crime had got worse in their local area, statistically significant at the 95% level in the Scottish population, controlled for all other variables. Moreover, Females were more likely to think crime had got worse in their local areas than Males, by an effect of 0.13, statistically significant at the 99% level, controlled for all other variables. An Adjusted R squared of 1.5%, is higher than the 0.3% previously, thus, explaining an improved variance of Local Perceptions of crime.
+
+### Anova
+
+```{r}
+
+# anova of just ethnicity and ethnicity and controls 
+
+anova(lm, lm_)
+
+```
+
+This improvement in variance explained, is statistically significant in the Scottish population at the 99.9% level.
+
+### Full regression Model
+
+```{r}
+
+# ethnicity, controls and confounders regression
+
+
+lm1<-lm(percepLoccrime~gender + age + victim + UR + deplevel + police + deprived + ethnicity, data = c)
+
+
+summary(lm1)
+
+
+
+
+```
+
+When the potential confounders are controlled for as well as all other variables, Females skeptical outlook on Perceptions of crime compared to Males stays the same, with still 99.9% statistical significance in the population. The literature points toward more pessimism from females on national crime improvement (Halsey and White: 2008), this seems to carry over here as well. Controlling for all other variables, those Aged 35-44's more skeptical outlook on perceptions of crime in their local area, became statistically insignificant in the Scottish population. Whilst, White Other's more positive view on Local crime improving compared to White Scottish people's, dropped from an effect of 0.24 to 0.20 here, remaining statistically significant at the 99.9% level, controlling for all other variables. Not a relationship we anticipated, and Ethnic minorities still remained ineffectual when viewing pessimism or optimism regarding Local Crime improvement, compared to White Scots.
+
+In terms of the confounders, those who have not been victims of crime think more positively than those who have been victims, at an effect of -0.28, statistically significant in the Scottish population at the 99.9% level, when controlled for all other variables. Presumably due to their personal experiences with crime, as mentioned previously. Additionally, those thinking the level of Local policing is about right, were more likely to feel Local crime had decreased, compared to those who think there is not enough local policing, at an effect of -0.22, statistically significant at the 99.9% level, when controlled for all other variables. This agrees with the logic - the police are there to stop crime, if you think crimes gone down, you have less incentive to want more police locally. Moreover, those who do not live in the 15% most deprived areas, think more negatively about the state of local crime, at an effect of 0.11, statistically significant at the 95% level in the Scottish population, when controlled for.
+
+The Adjusted R squared shows our model explains 5.7% of the variance in Perceptions of Local crime. Much higher than the 1.5% before.
+
+### Comparing the Ethnicity and Control model and Ethnicity, Controls, and Confounders Model
+
+```{r}
+
+# anova between ethnicity model and ethnicity, controls and confounders model
+
+anova(lm_, lm1)
+
+```
+
+The anova's suggest that the improvement in variance seen is statistically significant in the Scottish population at the 99.9% level in the population of Scotland.
+
+### Levels of Confidence
+
+```{r}
+
+# confidence intervals for ethnicity, controls, confounder model
+
+confint(lm1)
+
+```
+
+For the statistically significant variables, the level of confidence for the effects in the regression, suggests they are mostly being represented accurately. Those not living in the highest 15% deprived areas, showing a rather large range, and nearly, between a negative value and a positive, which would suggest a very untrustworthy effect.
+
+### Robust Standard Errors
+
+```{r}
+
+# robust standard errors for ethnicity, controls, confounder model
+
+coeftest(lm1, vcov = vcovHC(lm1, type="HC1"))
+
+
+```
+
+When robust standard errors are used, the coefficient of those who do not live in the 15% most deprived areas, compared to those that do, becomes insignificant, which reflects the problems outlined in the levels of confidence. Apart from this, the rest of models effects remain. Suggesting the model without the robust standard errors was fairly robust, and high leverage points non-impactful.
+
+## Residuals of the Full Model
+
+```{r}
+
+# cooks distance
+
+plot(lm1, which = 4, id.n = 3)
+
+# heteroskedasticity, linearity, outlier test plots
+
+plot(lm1, pch=18, col="red")
+
+```
+
+The Residuals vs Fitted plots shows that the strength of the linear relationship between our predictors and the dependent variable, with a pattern of data points present, and our mean not around the 0 point, is not strong. Thus, our model fails the correct functional form assumption, as well as the constant variance of errors assumption as we have heteroskedasticity shown in the plot, due to the marked pattern shown. Thus, there is more error in our model, than the model suggests.
+
+The Q-Q Plot, measures the level of normal distribution among the residuals. The data points do not fall along the dotted line, and the line itself does not start at the bottom left-hand corner of plot. Thus, suggesting non-normal distribution and the model struggles to be generalized to our population of interest, Scotland. However, this is to be expected given the compromises made in fitting a Linear regression to an Ordinal variable.
+
+The Scale-Location plot shows non-constant variances in our residuals, as the residuals in the plot are not equally spread, and the line running through the graph is very far off being horizontal. Thus, demonstrating heteroscedasticity, suggesting our Model does not account or represent the error that it should do.
+
+The residuals vs leverage plot and Cook's distance plot, are both indicating that no residuals breach the 3 cooks distance score threshold, indicating that there are no influential outliers. There are a group of points to the right hand side of the Residuals vs Leverage Plot, but these are relatively close to the cluster of points to the left-hand side with a 0.04 distance between them. Therefore, the influential outlier assumption has not been violated.
+
+```{r}
+
+# residuals histogram
+
+ols_plot_resid_hist(lm1)
+
+```
+
+Similar to the Q-Q plot, the Residuals Histogram demonstrates a slight negative skew, and a non-normal distribution, negatively affecting the Models generalisability to the Scottish population.
+
+```{r}
+
+# normality test
+
+shapiro.test(lm1$residuals)
+
+```
+
+A p-value of under 0.05 means means that our residuals are not normally distributed, reasserting the findings from the Q-Q Plot and Residuals Histogram.
+
+### Multi-collinearity
+
+```{r}
+
+# multi-collinearity test
+
+vif(lm1)
+
+```
+
+The VIF test above suggests there is no multi-collinearity in our model, with all values for the variables under 10. We can trust that our variables have independent explanatory power from one another. Thus, suggesting our standard errors are accurate, or at least, are not larger than they should be.
+
+### Log Transformation
+
+```{r}
+
+# transforming the outcome variable to a log
+
+lm_1<-lm(log(percepLoccrime)~gender + age + victim + UR + deplevel + police + deprived + ethnicity, data = c)
+
+summary(lm_1)
+
+plot(lm_1, 3)
+
+plot(lm_1, pch=18, col="red")
+
+ols_plot_resid_hist(lm_1)
+
+
+```
+
+As our Residuals for the Linear model indicated problems with non-linearity, performing logarithm transformation can improve this issue. Above is the results of the transformation, which did not render improved results, most potently shown in the Residuals vs Fitted plot, which continues to represent a non-random pattern, and mean line not around 0, suggesting non-linearity.
+
+\pagebreak
+
+# Conclusions
+
+In conclusion, the analysis suggests that Ethnicity, when controlled for other variables, is not effectual on perceiving crime in their local area to have not improved in the past 2 years, rather the opposite. Thus, our Research question can be answered, and our hypothesis rejected - being an Ethnic minority, does not lead to pessimistic views around the state of crime in the local area. Some other predictors we identified as related to Ethnicity, such as Deprivation, also, mostly, did not render statistically significant, but being a Victim did show more pessimistic view toward Local crime improvement. In relation to our exploratory analysis, we identified that more Ethnic Minorities were victims in this dataset, but people's perception of local crime is down to people's experiences with crime, their ethnicity is a by-product. The Ordinal regression had to be abandoned, due to the obsolescence rendered to significant predictors. Moreover, the Residuals of the Linear regression suggested an okay model, with normal distribution not achieved, as the differences between the categories were treated as equal, as we have outlined, when they are not in fact. In terms of variance, a decent amount was explained, with around 6% in our final model, and fairly robust standard errors. Additionally, the residuals of the Linear regression, and attempts to amend the Model seemed to point toward problems with the amount of predictor variables, and the dependent variables distribution - most people answering 'About the Same' on local crime improvement. Further research should identify other potential important predictors, which may have more success in explaining Local perception of crime. Despite this, it has been shown that Ethnicity is not particularly important in explaining Local perceptions of crime, and that many of our assumptions around the confounders impact on ethnicity, were not effectual here.
+
+In terms of limitations, the small ethnic minority sample, does reflect the small ethnic minority population in Scotland, so was representative, but such a small sample does introduce some doubt in the confidence we can have in the variance of responses captured for this group. Additionally, Ethnic Minorities were grouped, so the differences between individual ethnic groups could not be observed, which diminished some of the nuance we were able to capture. If Ethnic identities such as Pakistani's, and Black Caribbeans were available there could be further differences between these ethnic groups, which could have suggested greater pessimism toward the state of crime in their local areas. Despite this limitation, the Report points toward a gap in the current literature in exploring ethnicity and local perceptions of crime, and encourages further research on ethnicity and society in Scotland, but, also, with greater ME samples. In order to improve robustness of findings, and subsequently, improve our understandings on those with different cultural and ethnic backgrounds..
+
+\pagebreak
+
+# References
+
+Bonino, S. (2015) Visible Muslimness in Scotland: between discrimination and integration, Patterns of Prejudice, 49:4, 367-391, DOI: 10.1080/0031322X.2015.1066978
+
+Clarke, I and Moody, S. (2002). Perceptions of Racist Crime and Victimisation in Scotland: Report on how the Courts have responded to the introduction of racially aggravated offences to Scots Law. The Centre for Crime and Justice Studies, Volume 48.
+
+Coid, J., Zhang, Y., Ullrich, S. et al. Interpersonal violence in a deprived Scottish urban area with aggregations of physical health risks and psychiatric morbidity: an ecological study. BMC Public Health 21, 1121 (2021). <https://doi.org/10.1186/s12889-021-11167-z>
+
+Duffy, B., Wake, R., Burrows, T. and Bremner, P., 2008. Closing the gaps--crime and public perceptions. International Review of Law, Computers & Technology, 22(1-2), pp.17-44.
+
+Fyfe, N.R., Anderson, S., Bland, N., Goulding, A., Mitchell, J. and Reid, S. 2021. Experiencing organizational change during an era of reform: Police Scotland, narratives of localism, and perceptions from the 'frontline'. Policing [online], 15(1), pages 263-276. Available from: <https://doi.org/10.1093/police/pay052>
+
+Fohring, S., 2014. Putting a face on the dark figure: Describing victims who don't report crime. Temida, 17(4), pp.3-18.
+
+Halsey, K. and White, R., 2008. Young people, crime and public perceptions: a review of the literature. Berkshire: National Foundation for Educational Research.
+
+Khan, F, et al (2000). Ethnic Minority Use of Illegal Drugs in Glasgow, Scotland: Potential Difficulties for Service Provision, Addiction Research, 8:1, 27-49, DOI: 10.3109/16066350009004408
+
+Mohan, J, et al. Mind The Double Gap: Using Multivariate Multilevel Modelling to Investigate Public Perceptions of Crime Trends, The British Journal of Criminology, Volume 51, Issue 6, November 2011, Pages 1035--1053, <https://doi.org/10.1093/bjc/azr041>
+
+Netto, G. (2011). A review of poverty and ethnicity in Scotland. Joseph Rowntree Foundation.
+
+Scottish Census. (2021). Available at: <https://www.scotlandscensus.gov.uk/census-results/at-a>
+
+Scottish Government. (2018). Available at: Scottish Government Urban Rural Classification 2016 - gov.scot (www.gov.scot).
+
+Scottish Government. (2020). Poverty and Income Inequality in Scotland 2016-19. <https://www.gov.scot/publications/poverty-income-inequality-scotland-2016-19/pages/4/>
+
+Scottish Government. (2022). Scottish Index of Multiple Deprivation 2020. <https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020/>
+
+Smith, R., 2010. Policing the changing landscape of rural crime: a case study from Scotland. International Journal of Police Science and Management, 12 (3), pp. 373-387.
